@@ -1,4 +1,4 @@
-VERSION=0.0.0
+VERSION=0.0.1
 
 PACKAGEMAKER=/Developer/Applications/Utilities/PackageMaker.app/Contents/MacOS/PackageMaker
 
