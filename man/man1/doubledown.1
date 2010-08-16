@@ -1,0 +1,37 @@
+.\" generated with Ronn/v0.7.3
+.\" http://github.com/rtomayko/ronn/tree/0.7.3
+.
+.TH "DOUBLEDOWN" "1" "August 2010" "DevStructure" "Doubledown"
+.
+.SH "NAME"
+\fBdoubledown\fR \- sync local changes to a remote directory
+.
+.SH "SYNOPSIS"
+\fBdoubledown\fR \fIlocal\fR [\fIuser\fR@]\fIserver\fR:\fIremote\fR
+.
+.SH "DESCRIPTION"
+\fBdoubledown\fR brings \fIlocal\fR and \fIremote\fR on \fIserver\fR into sync and then executes doubledown\-fsevents(1) to watch \fIlocal\fR for changes\.
+.
+.P
+An ssh\-agent(1) is started if one cannot be found\.
+.
+.P
+rsync(1) is used to first download all files in \fIremote\fR on \fIserver\fR that do not exist in \fIlocal\fR, thus no local changes will be clobbered\. It then uploads any local changes\.
+.
+.SH "OPTIONS"
+.
+.TP
+\fB\-h\fR, \fB\-\-help\fR
+Show a help message\.
+.
+.SH "THEME SONG"
+The Arcade Fire \- "The Suburbs"
+.
+.SH "AUTHOR"
+Richard Crowley \fIrichard@devstructure\.com\fR
+.
+.SH "SEE ALSO"
+\fBdoubledown\fR was written to make it easier for DevStructure users to use Textmate and other IDEs but it\'s far from the only way to skin the cat\. See \fIhttp://docs\.devstructure\.com/working_remotely\fR for more options\.
+.
+.P
+doubledown\-fsevents(1) watches a directory and relays changes\. It is called by \fBdoubledown\fR\.
