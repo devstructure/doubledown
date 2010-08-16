@@ -1,0 +1,66 @@
+#!/bin/sh
+set -e
+
+usage() {
+	echo "Usage: $(basename $0) <local> [<user>@]<server>:<remote>" >&2
+	if [ -n "$1" ]; then
+		echo "  <local>   local pathname to sync" >&2
+		echo "  <user>    user that will connect to <remote>" >&2
+		echo "  <server>  remote server" >&2
+		echo "  <remote>  pathname to push to on <remote>" >&2
+		echo "  -h|--help show this help message" >&2
+		exit 0
+	fi
+	exit 1
+}
+
+[ "--help" = "$1" ] && usage help
+while getopts h name; do
+	case "$name" in
+		h) usage help;;
+		*) usage;;
+	esac
+done
+
+# We have to resort to Ruby because readlink(1) doesn't have -f on OS X.
+LOCAL=$(ruby -e "puts File.expand_path('$1')")
+if [ "$2" != "${2%%@*}" ]; then
+	USER=${2%%@*}
+fi
+SERVER=${2##*@}; SERVER=${SERVER%%:*}
+REMOTE=$(ruby -e "puts File.expand_path('${2##*:}')")
+[ -z "$LOCAL" ] && usage
+[ -z "$USER" ] && usage
+[ -z "$SERVER" ] && usage
+[ -z "$REMOTE" ] && usage
+
+# Grab an existing SSH agent or start one of our own, otherwise
+# doubledown-fsevents(1) will be very needy.
+if which ssh-agent >/dev/null; then
+	if [ -n "$SSH_AGENT_PID" -a -S "$SSH_AUTH_SOCK" ]; then
+		export SSH_AGENT_PID
+		export SSH_AUTH_SOCK
+	else
+		eval $(ssh-agent)
+		trap 'eval $(ssh-agent -k)' 0
+	fi
+	ssh-add
+else
+	echo "# [doubledown] ssh-agent not found in your PATH" >&2
+	exit 1
+fi
+
+# Perform the baseline sync: once, gently, from remote to local and once
+# normally from local to remote.
+if which rsync >/dev/null; then
+	echo "# [doubledown] syncing baseline from remote" >&2
+	rsync -az --ignore-existing $USER@$SERVER:$REMOTE $(dirname $LOCAL)
+	echo "# [doubledown] syncing local changes to remote" >&2
+	rsync -az $LOCAL $USER@$SERVER:$(dirname $REMOTE)
+else
+	echo "# [doubledown] rsync not found in your PATH" >&2
+	exit 1
+fi
+
+# That's it.  Now we become doubledown-fsevents(1) and watch the local directory.
+exec doubledown-fsevents "$@"

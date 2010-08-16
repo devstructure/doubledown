@@ -1,0 +1,160 @@
+#!/usr/bin/env ruby
+
+require 'optparse'
+require 'osx/foundation'
+
+OSX.require_framework "/System/Library/Frameworks/CoreServices.framework#{
+  }/Frameworks/CarbonCore.framework"
+
+class Doubledown
+
+  def initialize(local, remote)
+
+    # Decide on the local path.
+    Dir.mkdir(local) unless File.directory?(local)
+    @local = File.expand_path(local)
+
+    # Parse the server and remote path.  Decide on the remote username.
+    raise unless remote =~ /^(?:([^@]+)@)?([^:]+):(.+)$/
+    @user, @server, @remote = $1, $2, $3
+    @user ||= ENV["USER"]
+
+  end
+
+  def run
+    $stderr.puts "# [doubledown-fsevents] syncing #{@local
+      } changes to #{@server}:#{@remote}"
+
+    # Begin incremental syncing from local to remote.
+    stream = OSX.FSEventStreamCreate(
+      OSX::KCFAllocatorDefault,
+      lambda { |stream, context, count, paths, flags, events|
+
+        paths.regard_as("*")
+        count.times do |i|
+          dirname = paths[i].gsub(%r</$>, "")
+          deleted_files dirname
+          modified_files dirname
+        end
+        recache
+
+        # Not strictly necessary but it's nice to do our part in keeping
+        # the process tree clean.
+        begin
+          while pid = Process.wait(-1); end
+        rescue; end
+
+      },
+      nil,
+      [@local],
+      OSX::KFSEventStreamEventIdSinceNow,
+      0.1,
+      0
+    ) or raise
+    OSX.FSEventStreamScheduleWithRunLoop(
+      stream,
+      OSX.CFRunLoopGetCurrent,
+      OSX::KCFRunLoopDefaultMode
+    )
+    OSX.FSEventStreamStart(stream) or raise
+    recache
+
+    # This call never returns except by an exception.
+    OSX.CFRunLoopRun
+
+  end
+
+private
+
+  def deleted_file(pathname)
+    pathname2 = "#{@remote}#{pathname.sub(@local, "")}"
+    ssh("rm -d #{pathname2} 2>/dev/null", "removed #{pathname}")
+  rescue => e
+    $stderr.puts e.inspect
+    $stderr.puts e.backtrace
+    raise e
+  end
+
+  def deleted_files(dirname)
+    ((@cache[dirname] || {}).keys - Dir.entries(dirname)).each do |basename|
+      deleted_file File.join(dirname, basename)
+    end
+  end
+
+  # Run a command in the background.  This actually forks twice, leaving the
+  # intermediate process an opportunity to print a message.
+  def fork_exec(argv, message)
+    fork do
+      if system(*argv)
+        $stderr.puts "# [doubledown-fsevents] #{message}"
+      end
+    end
+  end
+
+  def modified_file(pathname)
+    pathname2 = "#{@remote}#{pathname.sub(@local, "")}"
+    if File.directory?(pathname)
+      ssh("mkdir #{pathname2} 2>/dev/null", "created #{pathname}")
+    else
+      $stderr.puts "# [doubledown-fsevents] uploading #{pathname}"
+      fork_exec(
+        %W(rsync -z #{pathname} #{@user}@#{@server}:#{pathname2}),
+        "uploaded #{pathname}"
+      )
+    end
+  rescue => e
+    $stderr.puts e.inspect
+    $stderr.puts e.backtrace
+    raise e
+  end
+
+  def modified_files(dirname)
+    Dir.foreach dirname do |basename|
+      next if "." == basename || ".." == basename
+      pathname = File.join(dirname, basename)
+      if cached_stat = (@cache[dirname] || {})[basename]
+        stat = File.lstat(pathname)
+        if cached_stat.mtime != stat.mtime || cached_stat.size != stat.size
+          modified_file pathname
+        end
+      else
+        modified_file pathname
+      end
+    end
+  end
+
+  # We have to keep a cache of File::Stat objects because the FSEvents API is
+  # not as awesome as inotify(7) on Linux.
+  def recache(dirname=@local)
+    @cache ||= {}
+    @cache[dirname] = {}
+    Dir.foreach dirname do |basename|
+      pathname = File.join(dirname, basename)
+      stat = File.lstat(pathname)
+      @cache[dirname][basename] = stat
+      if stat.symlink?
+      elsif stat.directory? && "." != basename && ".." != basename
+        recache pathname
+      end
+    end
+  end
+
+  # Run a command remotely via SSH.
+  def ssh(command, message)
+    fork_exec(
+      %W(ssh #{@user}@#{@server} /bin/sh -c '#{command}'),
+      message
+    )
+  end
+
+end
+
+options = {}
+OptionParser.new do |parser|
+  parser.banner = "Usage: <local> [<user>@]<server>:<remote>"
+  parser.on("-h", "--help", "show this help message") { options[:help] = true }
+end.parse!
+
+trap("EXIT") { Process.waitall }
+
+Doubledown.new(ARGV[0], ARGV[1]).run
