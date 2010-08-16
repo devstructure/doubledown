@@ -24,17 +24,14 @@ uninstall:
 		$(DESTDIR)/usr/share/man/man1/doubledown-fsevents.1
 
 package:
-ifneq (root, $(shell whoami))
-	@echo "Only root can build a package."
-	@false
-endif
-	rm -rf package
-	mkdir package
-	make install DESTDIR=package
-	$(PACKAGEMAKER) -r package \
+	sudo rm -rf package
+	sudo mkdir package
+	sudo make install DESTDIR=package
+	sudo $(PACKAGEMAKER) -r package \
 		-i com.devstructure.doubledown \
-		--version $(VERSION) -o doubledown-$(VERSION).pkg
-	rm -rf package
+		--version $(VERSION) -o doubledown.pkg
+	tar czf doubledown-$(VERSION).tar.gz doubledown.pkg
+	sudo rm -rf package doubledown.pkg
 
 man:
 	find man -name \*.ronn | xargs -n1 ronn \
