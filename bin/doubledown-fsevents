@@ -60,7 +60,10 @@ class Doubledown
     recache
 
     # This call never returns except by an exception.
-    OSX.CFRunLoopRun
+    begin
+      OSX.CFRunLoopRun
+    rescue Interrupt
+    end
 
   end
 
