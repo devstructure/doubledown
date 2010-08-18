@@ -1,27 +1,27 @@
 VERSION=0.0.1
-
+PREFIX=/usr
 PACKAGEMAKER=/Developer/Applications/Utilities/PackageMaker.app/Contents/MacOS/PackageMaker
 
 all:
 
 install:
-	install -d $(DESTDIR)/usr/bin
+	install -d $(DESTDIR)$(PREFIX)/bin
 	install \
 		bin/doubledown \
 		bin/doubledown-fsevents \
-		$(DESTDIR)/usr/bin/
-	install -d $(DESTDIR)/usr/share/man/man1
+		$(DESTDIR)$(PREFIX)/bin/
+	install -d $(DESTDIR)$(PREFIX)/share/man/man1
 	install -m644 \
 		man/man1/doubledown.1 \
 		man/man1/doubledown-fsevents.1 \
-		$(DESTDIR)/usr/share/man/man1/
+		$(DESTDIR)$(PREFIX)/share/man/man1/
 
 uninstall:
 	rm -f \
-		$(DESTDIR)/usr/bin/doubledown \
-		$(DESTDIR)/usr/bin/doubledown-fsevents \
-		$(DESTDIR)/usr/share/man/man1/doubledown.1 \
-		$(DESTDIR)/usr/share/man/man1/doubledown-fsevents.1
+		$(DESTDIR)$(PREFIX)/bin/doubledown \
+		$(DESTDIR)$(PREFIX)/bin/doubledown-fsevents \
+		$(DESTDIR)$(PREFIX)/share/man/man1/doubledown.1 \
+		$(DESTDIR)$(PREFIX)/share/man/man1/doubledown-fsevents.1
 
 package:
 	sudo rm -rf package
