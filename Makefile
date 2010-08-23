@@ -39,16 +39,15 @@ man:
 	find man -name \*.ronn | xargs -n1 ronn \
 		--manual=Doubledown --organization=DevStructure --style=toc
 
-gh-pages:
+gh-pages: man
 	mkdir -p gh-pages
 	find man -name \*.html | xargs -I__ mv __ gh-pages/
 	git checkout -q gh-pages
 	mv gh-pages/* ./
-	ln -sf doubledown.1.html index.html
-	git add *.html
+	git add .
 	git commit -m "Rebuilt manual."
 	git push origin gh-pages
 	git checkout -q master
 	rmdir gh-pages
 
-.PHONY: all install uninstall package man gh-pages
+.PHONY: all install uninstall package man docs gh-pages
