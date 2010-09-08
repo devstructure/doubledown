@@ -37,8 +37,8 @@ REMOTE=$(ruby -e "puts File.expand_path('${2##*:}')")
 # Grab an existing SSH agent or start one of our own, otherwise
 # doubledown-fsevents(1) will be very needy.
 if which ssh-agent >/dev/null; then
-	if [ -n "$SSH_AGENT_PID" -a -S "$SSH_AUTH_SOCK" ]; then
-		export SSH_AGENT_PID
+	if [ -S "$SSH_AUTH_SOCK" ]; then
+		[ -n "$SSH_AGENT_PID" ] && export SSH_AGENT_PID
 		export SSH_AUTH_SOCK
 	else
 		eval $(ssh-agent)
