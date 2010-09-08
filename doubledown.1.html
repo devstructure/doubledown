@@ -90,7 +90,7 @@
 <p>An <a href="http://man.cx/ssh-agent(1)" class="man-ref">ssh-agent<span class="s">(1)</span></a> is started if one cannot be found.  Because <code>doubledown</code> will connect to <em>server</em> many times over its life, you must use an SSH key pair to authenticate.  If you have not created an SSH key pair, do so with the following commands:</p>
 
 <pre><code>ssh-keygen -t rsa -b 2048 -f $HOME/.ssh/id_rsa
-ssh &lt;server> "echo $(cat $HOME/.ssh/id_rsa.pub)" &gt;.ssh/authorized_keys"
+ssh &lt;server> "echo $(cat $HOME/.ssh/id_rsa.pub) &gt;.ssh/authorized_keys"
 </code></pre>
 
 <p>When <code>doubledown</code> is run, <a href="http://man.cx/rsync(1)" class="man-ref">rsync<span class="s">(1)</span></a> is used to first download all files in <em>remote</em> on <em>server</em> that do not exist in <em>local</em>, thus no local changes will be clobbered.  It then uploads any local changes.  Finally, it executes <a href="http://devstructure.github.com/doubledown/doubledown-fsevents.1.html" class="man-ref">doubledown-fsevents<span class="s">(1)</span></a>.</p>
@@ -108,7 +108,7 @@ ssh &lt;server> "echo $(cat $HOME/.ssh/id_rsa.pub)" &gt;.ssh/authorized_keys"
 
 <h2 id="AUTHOR">AUTHOR</h2>
 
-<p>Richard Crowley <a data-bare-link="true" href="&#109;&#97;&#105;&#108;&#116;&#x6f;&#58;&#x72;&#105;&#99;&#104;&#97;&#114;&#x64;&#x40;&#x64;&#101;&#x76;&#x73;&#x74;&#x72;&#x75;&#x63;&#x74;&#x75;&#x72;&#101;&#x2e;&#x63;&#x6f;&#109;">&#x72;&#x69;&#99;&#x68;&#x61;&#x72;&#x64;&#64;&#x64;&#x65;&#118;&#115;&#x74;&#x72;&#x75;&#x63;&#x74;&#117;&#114;&#x65;&#46;&#x63;&#111;&#x6d;</a></p>
+<p>Richard Crowley <a data-bare-link="true" href="&#x6d;&#x61;&#105;&#108;&#x74;&#111;&#x3a;&#114;&#x69;&#99;&#x68;&#97;&#114;&#x64;&#64;&#x64;&#x65;&#x76;&#x73;&#x74;&#x72;&#x75;&#99;&#x74;&#117;&#114;&#x65;&#46;&#99;&#x6f;&#109;">&#114;&#x69;&#x63;&#104;&#97;&#x72;&#100;&#64;&#100;&#101;&#118;&#115;&#116;&#x72;&#x75;&#99;&#x74;&#117;&#x72;&#101;&#x2e;&#x63;&#111;&#109;</a></p>
 
 <h2 id="SEE-ALSO">SEE ALSO</h2>
 
@@ -121,7 +121,7 @@ ssh &lt;server> "echo $(cat $HOME/.ssh/id_rsa.pub)" &gt;.ssh/authorized_keys"
 
   <ol class='man-decor man-foot man foot'>
     <li class='tl'>DevStructure</li>
-    <li class='tc'>August 2010</li>
+    <li class='tc'>September 2010</li>
     <li class='tr'>doubledown(1)</li>
   </ol>
 
