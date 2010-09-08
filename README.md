@@ -12,7 +12,7 @@ doubledown(1) -- sync local changes to a remote directory
 An ssh-agent(1) is started if one cannot be found.  Because `doubledown` will connect to _server_ many times over its life, you must use an SSH key pair to authenticate.  If you have not created an SSH key pair, do so with the following commands:
 
 	ssh-keygen -t rsa -b 2048 -f $HOME/.ssh/id_rsa
-	ssh <server> "echo $(cat $HOME/.ssh/id_rsa.pub)" >.ssh/authorized_keys"
+	ssh <server> "echo $(cat $HOME/.ssh/id_rsa.pub) >.ssh/authorized_keys"
 
 When `doubledown` is run, rsync(1) is used to first download all files in _remote_ on _server_ that do not exist in _local_, thus no local changes will be clobbered.  It then uploads any local changes.  Finally, it executes doubledown-fsevents(1).
 
