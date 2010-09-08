@@ -54,9 +54,9 @@ fi
 # normally from local to remote.
 if which rsync >/dev/null; then
 	echo "# [doubledown] syncing baseline from remote" >&2
-	rsync -az --ignore-existing $USER@$SERVER:$REMOTE $(dirname $LOCAL)
+	rsync -azR --ignore-existing $USER@$SERVER:$REMOTE/./ $LOCAL
 	echo "# [doubledown] syncing local changes to remote" >&2
-	rsync -az $LOCAL $USER@$SERVER:$(dirname $REMOTE)
+	rsync -azR $LOCAL/./ $USER@$SERVER:$REMOTE
 else
 	echo "# [doubledown] rsync not found in your PATH" >&2
 	exit 1
