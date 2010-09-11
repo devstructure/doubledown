@@ -71,7 +71,7 @@ private
 
   def deleted_file(pathname)
     pathname2 = "#{@remote}#{pathname.sub(@local, "")}"
-    ssh("rm -d #{pathname2} 2>/dev/null", "removed #{pathname}")
+    ssh("rm -d #{pathname2.inspect} 2>/dev/null", "removed #{pathname}")
   rescue => e
     $stderr.puts e.inspect
     $stderr.puts e.backtrace
@@ -97,13 +97,15 @@ private
   def modified_file(pathname)
     pathname2 = "#{@remote}#{pathname.sub(@local, "")}"
     if File.directory?(pathname)
-      ssh("mkdir #{pathname2} 2>/dev/null", "created #{pathname}")
+      ssh("mkdir #{pathname2.inspect} 2>/dev/null", "created #{pathname}")
     else
       $stderr.puts "# [doubledown-fsevents] uploading #{pathname}"
-      fork_exec(
-        %W(rsync -z #{pathname} #{@user}@#{@server}:#{pathname2}),
-        "uploaded #{pathname}"
-      )
+      fork_exec([
+        "rsync",
+        "-z",
+        pathname,
+        "#{@user}@#{@server}:#{pathname2}",
+      ], "uploaded #{pathname}")
     end
   rescue => e
     $stderr.puts e.inspect
@@ -142,12 +144,13 @@ private
     end
   end
 
-  # Run a command remotely via SSH.
+  # Run a command remotely via SSH.  Avoid single quotes in the command.
   def ssh(command, message)
-    fork_exec(
-      %W(ssh #{@user}@#{@server} /bin/sh -c '#{command}'),
-      message
-    )
+    fork_exec([
+      "ssh",
+      "#{@user}@#{@server}",
+      "/bin/sh -c '#{command}'",
+    ], message)
   end
 
 end
