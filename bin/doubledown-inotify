@@ -41,6 +41,7 @@ trap wait 0 2
 # into the background so the `inotifywait` output reader can get back to
 # business.  The shell will `wait`(2) with `WNOHANG` after every command to
 # prevent piles of zombie processes from building up.
+echo "# [doubledown-fsevents] syncing $LOCAL changes to $SERVER:$REMOTE" >&2
 inotifywait -mrq \
 	-e modify,attrib,move,move_self,create,delete \
 	--format "%e %w%f" "$LOCAL" | while read LINE
@@ -52,10 +53,11 @@ do
 		case "$EVENT" in
 			delete|moved_from)
 				ssh "$USER@$SERVER" rm -d "$PATHNAME2" 2>/dev/null
-				echo "# [doubledown-inotify] removed $PATHNAME2";;
+				echo "# [doubledown-inotify] removed $PATHNAME2" >&2;;
 			*)
+				echo "# [doubledown-inotify] uploading $PATHNAME2" >&2
 				rsync -az "$PATHNAME" "$USER@$SERVER:$REMOTE/$PATHNAME2"
-				echo "# [doubledown-inotify] uploaded $PATHNAME2";;
+				echo "# [doubledown-inotify] uploaded $PATHNAME2" >&2;;
 		esac
 	) &
 done
