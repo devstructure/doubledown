@@ -14,9 +14,9 @@ usage() {
 }
 
 [ "$1" = "--help" ] && usage help
-while getopts h name
+while getopts h NAME
 do
-	case "$name" in
+	case "$NAME" in
 		h) usage help;;
 		*) usage;;
 	esac
@@ -29,9 +29,9 @@ then
 else
 	LOCAL=$(readlink -f "$1")
 fi
-[ "$2" != "${2%%@*}" ] && USER=${2%%@*}
-SERVER=${2##*@}; SERVER=${SERVER%%:*}
-REMOTE=$(ruby -e "puts File.expand_path('${2##*:}')")
+[ "$2" != "${2%%@*}" ] && USER="${2%%@*}"
+SERVER="${2##*@}"; SERVER="${SERVER%%:*}"
+REMOTE="${2##*:}"
 [ -z "$LOCAL" ] && usage
 [ -z "$USER" ] && usage
 [ -z "$SERVER" ] && usage

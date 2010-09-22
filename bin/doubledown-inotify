@@ -14,18 +14,18 @@ usage() {
 }
 
 [ "--help" = "$1" ] && usage help
-while getopts h name
+while getopts h NAME
 do
-	case "$name" in
+	case "$NAME" in
 		h) usage help;;
 		*) usage;;
 	esac
 done
 
 LOCAL=$(readlink -f "$1")
-[ "$2" != "${2%%@*}" ] && USER=${2%%@*}
-SERVER=${2##*@}; SERVER=${SERVER%%:*}
-REMOTE=$(readlink -f "${2##*:}")
+[ "$2" != "${2%%@*}" ] && USER="${2%%@*}"
+SERVER="${2##*@}"; SERVER="${SERVER%%:*}"
+REMOTE="${2##*:}"
 [ -z "$LOCAL" ] && usage
 [ -z "$USER" ] && usage
 [ -z "$SERVER" ] && usage
