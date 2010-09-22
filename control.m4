@@ -1,5 +1,5 @@
 Package: doubledown
-Version: 0.0.2-1
+Version: __VERSION__-1
 Section: devel
 Priority: optional
 Essential: no
