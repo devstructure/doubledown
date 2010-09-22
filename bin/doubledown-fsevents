@@ -38,8 +38,7 @@ class Doubledown
         end
         recache
 
-        # Not strictly necessary but it's nice to do our part in keeping
-        # the process tree clean.
+        # Keep the process tree clean.
         begin
           while pid = Process.wait(-1); end
         rescue; end
@@ -128,8 +127,8 @@ private
     end
   end
 
-  # We have to keep a cache of File::Stat objects because the FSEvents API is
-  # not as awesome as inotify(7) on Linux.
+  # Keep a cache of `File::Stat` objects because the FSEvents API is not
+  # as awesome as `inotify`(7) on Linux.
   def recache(dirname=@local)
     @cache ||= {}
     @cache[dirname] = {}

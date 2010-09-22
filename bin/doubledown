@@ -3,30 +3,33 @@ set -e
 
 usage() {
 	echo "Usage: $(basename $0) <local> [<user>@]<server>:<remote>" >&2
-	if [ -n "$1" ]; then
+	[ -n "$1" ] && {
 		echo "  <local>   local pathname to sync" >&2
 		echo "  <user>    user that will connect to <remote>" >&2
 		echo "  <server>  remote server" >&2
 		echo "  <remote>  pathname to push to on <remote>" >&2
 		echo "  -h|--help show this help message" >&2
 		exit 0
-	fi
-	exit 1
+	} || exit 1
 }
 
-[ "--help" = "$1" ] && usage help
-while getopts h name; do
+[ "$1" = "--help" ] && usage help
+while getopts h name
+do
 	case "$name" in
 		h) usage help;;
 		*) usage;;
 	esac
 done
 
-# We have to resort to Ruby because readlink(1) doesn't have -f on OS X.
-LOCAL=$(ruby -e "puts File.expand_path('$1')")
-if [ "$2" != "${2%%@*}" ]; then
-	USER=${2%%@*}
+# Resort to Ruby because `readlink`(1) doesn't have `-f` on OS X.
+if [ "$(uname -s)" = "Darwin" ]
+then
+	LOCAL=$(ruby -e "puts File.expand_path('$1')")
+else
+	LOCAL=$(readlink -f "$1")
 fi
+[ "$2" != "${2%%@*}" ] && USER=${2%%@*}
 SERVER=${2##*@}; SERVER=${SERVER%%:*}
 REMOTE=$(ruby -e "puts File.expand_path('${2##*:}')")
 [ -z "$LOCAL" ] && usage
@@ -34,17 +37,22 @@ REMOTE=$(ruby -e "puts File.expand_path('${2##*:}')")
 [ -z "$SERVER" ] && usage
 [ -z "$REMOTE" ] && usage
 
-# Grab an existing SSH agent or start one of our own, otherwise
-# doubledown-fsevents(1) will be very needy.
-if which ssh-agent >/dev/null; then
-	if [ -S "$SSH_AUTH_SOCK" ]; then
+# Grab an existing SSH agent or start one just for `doubledown`, otherwise
+# `doubledown-fsevents`(1) and `doubledown-inotify`(1) will be very needy.
+if which ssh-agent >/dev/null
+then
+	if [ -S "$SSH_AUTH_SOCK" ]
+	then
 		[ -n "$SSH_AGENT_PID" ] && export SSH_AGENT_PID
 		export SSH_AUTH_SOCK
 	else
 		eval $(ssh-agent)
 		trap 'eval $(ssh-agent -k)' 0
 	fi
+
+	# <http://github.com/devstructure/doubledown/issues#issue/3>
 	ssh-add
+
 else
 	echo "# [doubledown] ssh-agent not found in your PATH" >&2
 	exit 1
@@ -52,7 +60,8 @@ fi
 
 # Perform the baseline sync: once, gently, from remote to local and once
 # normally from local to remote.
-if which rsync >/dev/null; then
+if which rsync >/dev/null
+then
 	echo "# [doubledown] syncing baseline from remote" >&2
 	rsync -azR --ignore-existing "$USER@$SERVER:$REMOTE/./" "$LOCAL"
 	echo "# [doubledown] syncing local changes to remote" >&2
@@ -62,5 +71,12 @@ else
 	exit 1
 fi
 
-# That's it.  Now we become doubledown-fsevents(1) and watch the local directory.
-exec doubledown-fsevents "$@"
+# That's it.  From here on `doubledown-fsevents`(1) or
+# `doubledown-inotify`(1) will watch the local directory for changes.
+if which doubledown-fsevents >/dev/null
+then
+	exec doubledown-fsevents "$@"
+elif which doubledown-inotify >/dev/null
+then
+	exec doubledown-inofity "$@"
+fi
