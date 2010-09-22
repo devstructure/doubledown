@@ -1,0 +1,31 @@
+doubledown-inofity(1) -- sync local changes to a remote directory
+=================================================================
+
+## SYNOPSIS
+
+`doubledown-inotify` _local_ [_user_@]_server_:_remote_
+
+## DESCRIPTION
+
+`doubledown-inotify` watches _local_ using `inotifywait`(1), relaying changes to the _remote_ directory on _server_.
+
+Directories created within _local_ are created remotely using ssh(1).  Files and directories removed within _local_ are removed remotely using ssh(1).  Files that are created or changed are uploaded using rsync(1).
+
+This program requires Linux with a kernel newer than 2.6.13.
+
+## OPTIONS
+
+* `-h`, `--help`:
+  Show a help message.
+
+## THEME SONG
+
+The Arcade Fire - "The Suburbs"
+
+## AUTHOR
+
+Richard Crowley <richard@devstructure.com>
+
+## SEE ALSO
+
+`doubledown` was written to make it easier for DevStructure users to use Textmate and other IDEs but it's far from the only way to skin the cat.  See <http://docs.devstructure.com/working_remotely> for more options.

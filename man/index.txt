@@ -1,6 +1,8 @@
 doubledown(1) http://devstructure.github.com/doubledown/doubledown.1.html
 doubledown-fsevents(1) http://devstructure.github.com/doubledown/doubledown-fsevents.1.html
+doubledown-inotify(1) http://devstructure.github.com/doubledown/doubledown-inotify.1.html
 
 ssh-agent(1) http://man.cx/ssh-agent(1)
 ssh(1) http://man.cx/ssh(1)
 rsync(1) http://man.cx/rsync(1)
+inotifywait(1) http://man.cx/inotifywait(1)
