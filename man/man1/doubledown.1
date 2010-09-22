@@ -7,7 +7,7 @@
 \fBdoubledown\fR \- sync local changes to a remote directory
 .
 .SH "SYNOPSIS"
-\fBdoubledown\fR \fIlocal\fR [\fIuser\fR@]\fIserver\fR:\fIremote\fR
+\fBdoubledown\fR [\fB\-i\fR \fIidentity\fR] \fIlocal\fR [\fIuser\fR@]\fIserver\fR:\fIremote\fR
 .
 .SH "DESCRIPTION"
 \fBdoubledown\fR brings \fIlocal\fR and \fIremote\fR on \fIserver\fR into sync and then executes doubledown\-fsevents(1) to watch \fIlocal\fR for changes\.
@@ -30,6 +30,10 @@ ssh <server> "echo $(cat $HOME/\.ssh/id_rsa\.pub) >\.ssh/authorized_keys"
 When \fBdoubledown\fR is run, rsync(1) is used to first download all files in \fIremote\fR on \fIserver\fR that do not exist in \fIlocal\fR, thus no local changes will be clobbered\. It then uploads any local changes\. Finally, it executes doubledown\-fsevents(1)\.
 .
 .SH "OPTIONS"
+.
+.TP
+\fB\-i\fR \fIidentity\fR
+Use a non\-standard identity (private key)\. Analogous to the \fB\-i\fR option to \fBssh\fR(1)\.
 .
 .TP
 \fB\-h\fR, \fB\-\-help\fR
