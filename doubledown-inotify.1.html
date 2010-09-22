@@ -3,7 +3,7 @@
 <head>
   <meta http-equiv='content-type' value='text/html;charset=utf8'>
   <meta name='generator' value='Ronn/v0.7.3 (http://github.com/rtomayko/ronn/tree/0.7.3)'>
-  <title>doubledown(1) - sync local changes to a remote directory</title>
+  <title>doubledown-inofity(1) - sync local changes to a remote directory</title>
   <style type='text/css' media='all'>
   /* style: man */
   body#manpage {margin:0}
@@ -69,36 +69,31 @@
     </div>
 
   <ol class='man-decor man-head man head'>
-    <li class='tl'>doubledown(1)</li>
+    <li class='tl'>doubledown-inofity(1)</li>
     <li class='tc'>Doubledown</li>
-    <li class='tr'>doubledown(1)</li>
+    <li class='tr'>doubledown-inofity(1)</li>
   </ol>
 
   <h2 id="NAME">NAME</h2>
 <p class="man-name">
-  <code>doubledown</code> - <span class="man-whatis">sync local changes to a remote directory</span>
+  <code>doubledown-inofity</code> - <span class="man-whatis">sync local changes to a remote directory</span>
 </p>
 
 <h2 id="SYNOPSIS">SYNOPSIS</h2>
 
-<p><code>doubledown</code> [<code>-i</code> <em>identity</em>] <em>local</em> [<em>user</em>@]<em>server</em>:<em>remote</em></p>
+<p><code>doubledown-inotify</code> <em>local</em> [<em>user</em>@]<em>server</em>:<em>remote</em></p>
 
 <h2 id="DESCRIPTION">DESCRIPTION</h2>
 
-<p><code>doubledown</code> brings <em>local</em> and <em>remote</em> on <em>server</em> into sync and then executes <a href="http://devstructure.github.com/doubledown/doubledown-fsevents.1.html" class="man-ref">doubledown-fsevents<span class="s">(1)</span></a> to watch <em>local</em> for changes.</p>
+<p><code>doubledown-inotify</code> watches <em>local</em> using <code>inotifywait</code>(1), relaying changes to the <em>remote</em> directory on <em>server</em>.</p>
 
-<p>An <a href="http://man.cx/ssh-agent(1)" class="man-ref">ssh-agent<span class="s">(1)</span></a> is started if one cannot be found.  Because <code>doubledown</code> will connect to <em>server</em> many times over its life, you must use an SSH key pair to authenticate.  If you have not created an SSH key pair, do so with the following commands:</p>
+<p>Directories created within <em>local</em> are created remotely using <a href="http://man.cx/ssh(1)" class="man-ref">ssh<span class="s">(1)</span></a>.  Files and directories removed within <em>local</em> are removed remotely using <a href="http://man.cx/ssh(1)" class="man-ref">ssh<span class="s">(1)</span></a>.  Files that are created or changed are uploaded using <a href="http://man.cx/rsync(1)" class="man-ref">rsync<span class="s">(1)</span></a>.</p>
 
-<pre><code>ssh-keygen -t rsa -b 2048 -f $HOME/.ssh/id_rsa
-ssh &lt;server> "echo $(cat $HOME/.ssh/id_rsa.pub) &gt;.ssh/authorized_keys"
-</code></pre>
-
-<p>When <code>doubledown</code> is run, <a href="http://man.cx/rsync(1)" class="man-ref">rsync<span class="s">(1)</span></a> is used to first download all files in <em>remote</em> on <em>server</em> that do not exist in <em>local</em>, thus no local changes will be clobbered.  It then uploads any local changes.  Finally, it executes <a href="http://devstructure.github.com/doubledown/doubledown-fsevents.1.html" class="man-ref">doubledown-fsevents<span class="s">(1)</span></a>.</p>
+<p>This program requires Linux with a kernel newer than 2.6.13.</p>
 
 <h2 id="OPTIONS">OPTIONS</h2>
 
 <dl>
-<dt><code>-i</code> <em>identity</em></dt><dd>Use a non-standard identity (private key).  Analogous to the <code>-i</code> option to <code>ssh</code>(1).</dd>
 <dt><code>-h</code>, <code>--help</code></dt><dd>Show a help message.</dd>
 </dl>
 
@@ -115,15 +110,11 @@ ssh &lt;server> "echo $(cat $HOME/.ssh/id_rsa.pub) &gt;.ssh/authorized_keys"
 
 <p><code>doubledown</code> was written to make it easier for DevStructure users to use Textmate and other IDEs but it's far from the only way to skin the cat.  See <a href="http://docs.devstructure.com/working_remotely" data-bare-link="true">http://docs.devstructure.com/working_remotely</a> for more options.</p>
 
-<p><a href="http://devstructure.github.com/doubledown/doubledown-fsevents.1.html" class="man-ref">doubledown-fsevents<span class="s">(1)</span></a> watches a directory and relays changes.  It is called by <code>doubledown</code>.</p>
-
-<p>The source code for <code>doubledown</code> is available at <a href="http://github.com/devstructure/doubledown" data-bare-link="true">http://github.com/devstructure/doubledown</a>.</p>
-
 
   <ol class='man-decor man-foot man foot'>
     <li class='tl'>DevStructure</li>
     <li class='tc'>September 2010</li>
-    <li class='tr'>doubledown(1)</li>
+    <li class='tr'>doubledown-inofity(1)</li>
   </ol>
 
   </div>
