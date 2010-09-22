@@ -1,0 +1,21 @@
+Hacking on Doubledown
+=====================
+
+Mac OS X
+--------
+
+Everything you need comes with 10.5 and newer.
+
+Linux
+-----
+
+The package requires `inotify-tools` and the build process requires
+`debra`, `git-core`, and `m4`.  `inotify-tools` is available in Ubuntu
+10.04 Lucid Lynx.  `debra` is available from DevStructure.  `git-core`
+and `m4` are available basically everywhere.
+
+	echo "deb http://packages.devstructure.com/ lucid main" \
+		>/etc/apt/sources.list.d/devstructure.list
+	wget -O - http://packages.devstructure.com/keyring.gpg | apt-key add -
+	apt-get update
+	apt-get -y install debra git-core inotify-tools m4

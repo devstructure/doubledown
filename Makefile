@@ -8,24 +8,38 @@ all:
 
 install:
 	install -d $(DESTDIR)$(prefix)/bin
-	install \
-		bin/doubledown \
-		bin/doubledown-fsevents \
-		$(DESTDIR)$(prefix)/bin/
+	install bin/doubledown $(DESTDIR)$(prefix)/bin/
 	install -d $(DESTDIR)$(prefix)/share/man/man1
-	install -m644 \
-		man/man1/doubledown.1 \
-		man/man1/doubledown-fsevents.1 \
+	install -m644 man/man1/doubledown.1 \
+		$(DESTDIR)$(prefix)/share/man/man1/
+	make install-$(shell uname -s)
+
+install-Darwin:
+	install bin/doubledown-fsevents $(DESTDIR)$(prefix)/bin/
+	install -m644 man/man1/doubledown-fsevents.1 \
+		$(DESTDIR)$(prefix)/share/man/man1/
+
+install-Linux:
+	install bin/doubledown-inotify $(DESTDIR)$(prefix)/bin/
+	install -m644 man/man1/doubledown-inotify.1 \
 		$(DESTDIR)$(prefix)/share/man/man1/
 
 uninstall:
 	rm -f \
 		$(DESTDIR)$(prefix)/bin/doubledown \
 		$(DESTDIR)$(prefix)/bin/doubledown-fsevents \
+		$(DESTDIR)$(prefix)/bin/doubledown-inotify \
 		$(DESTDIR)$(prefix)/share/man/man1/doubledown.1 \
-		$(DESTDIR)$(prefix)/share/man/man1/doubledown-fsevents.1
+		$(DESTDIR)$(prefix)/share/man/man1/doubledown-fsevents.1 \
+		$(DESTDIR)$(prefix)/share/man/man1/doubledown-inotify.1
+	rmdir -p --ignore-fail-on-non-empty \
+		$(DESTDIR)$(prefix)/bin \
+		$(DESTDIR)$(prefix)/share/man/man1
 
 package:
+	make package-$(shell uname -s)
+
+package-Darwin:
 	sudo rm -rf package
 	sudo mkdir package
 	sudo make install DESTDIR=package prefix=/usr
@@ -34,6 +48,17 @@ package:
 		--version $(VERSION) -o doubledown.pkg
 	tar czf doubledown-$(VERSION).tar.gz doubledown.pkg
 	sudo rm -rf package doubledown.pkg
+
+package-Linux: deb
+
+deb:
+	[ "$$(whoami)" = "root" ] || false
+	m4 -D__VERSION__=$(VERSION) control.m4 >control
+	debra create debian control
+	make install DESTDIR=debian prefix=/usr
+	chown -R root:root debian
+	debra build debian doubledown_$(VERSION)_all.deb
+	debra destroy debian
 
 man:
 	find man -name \*.ronn | xargs -n1 ronn \
@@ -50,4 +75,4 @@ gh-pages: man
 	git checkout -q master
 	rmdir gh-pages
 
-.PHONY: all install uninstall package man docs gh-pages
+.PHONY: all install install-Darwin install-Linux uninstall package package-Darwin package-Linux deb man docs gh-pages

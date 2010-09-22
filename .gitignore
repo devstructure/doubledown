@@ -3,3 +3,5 @@ package
 *.html
 *.pkg
 *.tar.gz
+*.deb
+control
