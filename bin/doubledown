@@ -80,10 +80,13 @@ fi
 
 # That's it.  From here on `doubledown-fsevents`(1) or
 # `doubledown-inotify`(1) will watch the local directory for changes.
-if which doubledown-fsevents >/dev/null
+if [ "$(uname -s)" = "Darwin" ]
 then
 	exec doubledown-fsevents "$@"
-elif which doubledown-inotify >/dev/null
+elif [ "$(uname -s)" = "Linux" ]
 then
-	exec doubledown-inofity "$@"
+	exec doubledown-inotify "$@"
+else
+	echo "# [doubledown] unsupported operating system" >&2
+	exit 1
 fi
