@@ -70,7 +70,7 @@ private
 
   def deleted_file(pathname)
     pathname2 = "#{@remote}#{pathname.sub(@local, "")}"
-    ssh("rm -d #{pathname2.inspect} 2>/dev/null", "removed #{pathname}")
+    ssh("rm -d #{pathname2.inspect} 2>/dev/null", "removed #{pathname2}")
   rescue => e
     $stderr.puts e.inspect
     $stderr.puts e.backtrace
@@ -95,17 +95,13 @@ private
 
   def modified_file(pathname)
     pathname2 = "#{@remote}#{pathname.sub(@local, "")}"
-    if File.directory?(pathname)
-      ssh("mkdir #{pathname2.inspect} 2>/dev/null", "created #{pathname}")
-    else
-      $stderr.puts "# [doubledown-fsevents] uploading #{pathname}"
-      fork_exec([
-        "rsync",
-        "-z",
-        pathname,
-        "#{@user}@#{@server}:#{pathname2}",
-      ], "uploaded #{pathname}")
-    end
+    $stderr.puts "# [doubledown-fsevents] uploading #{pathname2}"
+    fork_exec([
+      "rsync",
+      "-az",
+      pathname,
+      "#{@user}@#{@server}:#{pathname2}",
+    ], "uploaded #{pathname2}")
   rescue => e
     $stderr.puts e.inspect
     $stderr.puts e.backtrace
