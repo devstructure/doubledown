@@ -3,7 +3,7 @@ doubledown(1) -- sync local changes to a remote directory
 
 ## SYNOPSIS
 
-`doubledown` _local_ [_user_@]_server_:_remote_
+`doubledown` [`-i` _identity_] _local_ [_user_@]_server_:_remote_
 
 ## DESCRIPTION
 
@@ -18,6 +18,8 @@ When `doubledown` is run, rsync(1) is used to first download all files in _remot
 
 ## OPTIONS
 
+* `-i` _identity_:
+  Use a non-standard identity (private key).  Analogous to the `-i` option to `ssh`(1).
 * `-h`, `--help`:
   Show a help message.
 

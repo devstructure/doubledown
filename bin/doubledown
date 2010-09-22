@@ -2,25 +2,28 @@
 set -e
 
 usage() {
-	echo "Usage: $(basename $0) <local> [<user>@]<server>:<remote>" >&2
+	echo "Usage: $(basename $0) [-i <identity>] <local> [<user>@]<server>:<remote>" >&2
 	[ -n "$1" ] && {
-		echo "  <local>   local pathname to sync" >&2
-		echo "  <user>    user that will connect to <remote>" >&2
-		echo "  <server>  remote server" >&2
-		echo "  <remote>  pathname to push to on <remote>" >&2
+		echo "  <local>       local pathname to sync" >&2
+		echo "  <user>        user that will connect to <remote>" >&2
+		echo "  <server>      remote server" >&2
+		echo "  <remote>      pathname to push to on <remote>" >&2
+		echo "  -i <identity> non-standard identity (private key)" >&2
 		echo "  -h|--help show this help message" >&2
 		exit 0
 	} || exit 1
 }
 
 [ "$1" = "--help" ] && usage help
-while getopts h NAME
+while getopts i:h NAME
 do
 	case "$NAME" in
+		i) IDENTITY="$OPTARG";;
 		h) usage help;;
 		*) usage;;
 	esac
 done
+shift $(($OPTIND - 1))
 
 # Resort to Ruby because `readlink`(1) doesn't have `-f` on OS X.
 if [ "$(uname -s)" = "Darwin" ]
@@ -50,8 +53,12 @@ then
 		trap 'eval $(ssh-agent -k)' 0
 	fi
 
-	# <http://github.com/devstructure/doubledown/issues#issue/3>
-	ssh-add
+	if [ -z "$IDENTITY" ]
+	then
+		ssh-add
+	else
+		ssh-add "$IDENTITY"
+	fi
 
 else
 	echo "# [doubledown] ssh-agent not found in your PATH" >&2
