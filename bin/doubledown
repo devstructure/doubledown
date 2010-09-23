@@ -53,10 +53,10 @@ then
 		trap 'eval $(ssh-agent -k)' 0
 	fi
 
-	if [ -n "$IDENTITY" ]
-	then
-		ssh-add "$IDENTITY"
-	fi
+	[ -n "$IDENTITY" ] && ssh-add "$IDENTITY" || ssh-add || {
+		echo "# [doubledown] no SSH identity found" >&2
+		exit 1
+	}
 
 else
 	echo "# [doubledown] ssh-agent not found in your PATH" >&2
