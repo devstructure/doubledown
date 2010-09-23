@@ -53,7 +53,8 @@ then
 		trap 'eval $(ssh-agent -sk)' 0
 	fi
 
-	[ -n "$IDENTITY" ] && ssh-add "$IDENTITY" || ssh-add || {
+	[ -n "$IDENTITY" ] && ssh-add "$IDENTITY" || \
+	[ -n "$(ssh-add -L)" ] || ssh-add || {
 		echo "# [doubledown] no SSH identity found" >&2
 		exit 1
 	}
