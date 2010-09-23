@@ -49,8 +49,8 @@ then
 		[ -n "$SSH_AGENT_PID" ] && export SSH_AGENT_PID
 		export SSH_AUTH_SOCK
 	else
-		eval $(ssh-agent)
-		trap 'eval $(ssh-agent -k)' 0
+		eval $(ssh-agent -s)
+		trap 'eval $(ssh-agent -sk)' 0
 	fi
 
 	[ -n "$IDENTITY" ] && ssh-add "$IDENTITY" || ssh-add || {
