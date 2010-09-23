@@ -53,10 +53,8 @@ then
 		trap 'eval $(ssh-agent -k)' 0
 	fi
 
-	if [ -z "$IDENTITY" ]
+	if [ -n "$IDENTITY" ]
 	then
-		ssh-add
-	else
 		ssh-add "$IDENTITY"
 	fi
 
