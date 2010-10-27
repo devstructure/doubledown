@@ -8,16 +8,18 @@ usage() {
 		echo "  <user>    user that will connect to <remote>" >&2
 		echo "  <server>  remote server" >&2
 		echo "  <remote>  pathname to push to on <remote>" >&2
+		echo "  -p        don't copy files" >&2
 		echo "  -h|--help show this help message" >&2
 		exit 0
 	} || exit 1
 }
 
 [ "--help" = "$1" ] && usage help
-while getopts h NAME
+while getopts h:p NAME
 do
 	case "$NAME" in
 		h) usage help;;
+		p) PRETEND="--dry-run";;
 		*) usage;;
 	esac
 done
@@ -30,6 +32,12 @@ REMOTE="${2##*:}"
 [ -z "$USER" ] && usage
 [ -z "$SERVER" ] && usage
 [ -z "$REMOTE" ] && usage
+
+EXCLUDES="--exclude=.excludes*"
+if [ -e "$LOCAL/.excludes" ]
+then
+    EXCLUDES="--exclude=.excludes* --exclude-from=$LOCAL/.excludes"
+fi
 
 # FIXME This does not work.  `doubledown-inotify` should wait on all its
 # children before succumbing to `SIGINT`.  In practice, it's not a huge
@@ -55,8 +63,8 @@ do
 				ssh "$USER@$SERVER" rm -d "$PATHNAME2" 2>/dev/null
 				echo "# [doubledown-inotify] removed $PATHNAME2" >&2;;
 			*)
-				echo "# [doubledown-inotify] uploading $PATHNAME2" >&2
-				rsync -az "$PATHNAME" "$USER@$SERVER:$REMOTE/$PATHNAME2"
+				#echo "# [doubledown-inotify] uploading $PATHNAME2" >&2
+				rsync $EXCLUDES $PRETEND -aiz "$PATHNAME" "$USER@$SERVER:$REMOTE/$PATHNAME2" 2>/dev/null
 				echo "# [doubledown-inotify] uploaded $PATHNAME2" >&2;;
 		esac
 	) &

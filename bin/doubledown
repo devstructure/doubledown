@@ -9,17 +9,19 @@ usage() {
 		echo "  <server>      remote server" >&2
 		echo "  <remote>      pathname to push to on <remote>" >&2
 		echo "  -i <identity> non-standard identity (private key)" >&2
-		echo "  -h|--help show this help message" >&2
+		echo "  -p            list files, don't copy" >&2
+		echo "  -h|--help     show this help message" >&2
 		exit 0
 	} || exit 1
 }
 
 [ "$1" = "--help" ] && usage help
-while getopts i:h NAME
+while getopts i:h:p NAME
 do
 	case "$NAME" in
 		i) IDENTITY="$OPTARG";;
 		h) usage help;;
+		p) PRETEND="--list-only";;
 		*) usage;;
 	esac
 done
@@ -39,6 +41,12 @@ REMOTE="${2##*:}"
 [ -z "$USER" ] && usage
 [ -z "$SERVER" ] && usage
 [ -z "$REMOTE" ] && usage
+
+EXCLUDES="--exclude=/.excludes"
+if [ -e "$LOCAL/.excludes" ]
+then
+	EXCLUDES="--exclude=/.excludes --exclude-from=$LOCAL/.excludes"
+fi
 
 # Grab an existing SSH agent or start one just for `doubledown`, otherwise
 # `doubledown-fsevents`(1) and `doubledown-inotify`(1) will be very needy.
@@ -68,10 +76,10 @@ fi
 # normally from local to remote.
 if which rsync >/dev/null
 then
-	echo "# [doubledown] syncing baseline from remote" >&2
-	rsync -azR --ignore-existing "$USER@$SERVER:$REMOTE/./" "$LOCAL"
+	#echo "# [doubledown] syncing baseline from remote" >&2
+	#rsync -azR --ignore-existing "$USER@$SERVER:$REMOTE/./" "$LOCAL"
 	echo "# [doubledown] syncing local changes to remote" >&2
-	rsync -azR "$LOCAL/./" "$USER@$SERVER:$REMOTE"
+	rsync $EXCLUDES $PRETEND -azR "$LOCAL/./" "$USER@$SERVER:$REMOTE"
 else
 	echo "# [doubledown] rsync not found in your PATH" >&2
 	exit 1
