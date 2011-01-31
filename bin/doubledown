@@ -27,6 +27,9 @@ do
 done
 shift $(($OPTIND - 1))
 
+env growlnotify -h > /dev/null 2> /dev/null
+has_growl=$?
+
 # Resort to Ruby because `readlink`(1) doesn't have `-f` on OS X.
 if [ "$(uname -s)" = "Darwin" ]
 then
@@ -63,12 +66,20 @@ then
 
 	[ -n "$IDENTITY" ] && ssh-add "$IDENTITY" || \
 	[ -n "$(ssh-add -L)" ] || ssh-add || {
-		echo "# [doubledown] no SSH identity found" >&2
+		if [ "$has_growl" == "0" ] ; then
+		    growlnotify "# [doubledown] no SSH identity found" >&2
+		else
+			echo "# [doubledown] no SSH identity found" >&2
+		fi
 		exit 1
 	}
 
 else
-	echo "# [doubledown] ssh-agent not found in your PATH" >&2
+	if [ "$has_growl" == "0" ] ; then
+	    growlnotify "# [doubledown] ssh-agent not found in your PATH" >&2
+	else
+		echo "# [doubledown] ssh-agent not found in your PATH" >&2
+	fi
 	exit 1
 fi
 
@@ -78,10 +89,18 @@ if which rsync >/dev/null
 then
 	#echo "# [doubledown] syncing baseline from remote" >&2
 	#rsync -azR --ignore-existing "$USER@$SERVER:$REMOTE/./" "$LOCAL"
-	echo "# [doubledown] syncing local changes to remote" >&2
+	if [ "$has_growl" == "0" ] ; then
+	    growlnotify "# [doubledown] syncing local changes to remote" >&2
+	else
+		echo "# [doubledown] syncing local changes to remote" >&2
+	fi
 	rsync $EXCLUDES $PRETEND -azR "$LOCAL/./" "$USER@$SERVER:$REMOTE"
 else
-	echo "# [doubledown] rsync not found in your PATH" >&2
+	if [ "$has_growl" == "0" ] ; then
+	    growlnotify "# [doubledown] rsync not found in your PATH" >&2
+	else
+		echo "# [doubledown] rsync not found in your PATH" >&2
+	fi
 	exit 1
 fi
 
@@ -94,6 +113,10 @@ elif [ "$(uname -s)" = "Linux" ]
 then
 	exec doubledown-inotify "$@"
 else
-	echo "# [doubledown] unsupported operating system" >&2
+	if [ "$has_growl" == "0" ] ; then
+	    growlnotify "# [doubledown] unsupported operating system" >&2
+	else
+		echo "# [doubledown] unsupported operating system" >&2
+	fi
 	exit 1
 fi

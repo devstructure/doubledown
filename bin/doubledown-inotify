@@ -24,6 +24,9 @@ do
 	esac
 done
 
+env growlnotify -h > /dev/null 2> /dev/null
+has_growl=$?
+
 LOCAL=$(readlink -f "$1")
 [ "$2" != "${2%%@*}" ] && USER="${2%%@*}"
 SERVER="${2##*@}"; SERVER="${SERVER%%:*}"
@@ -49,7 +52,12 @@ trap wait 0 2
 # into the background so the `inotifywait` output reader can get back to
 # business.  The shell will `wait`(2) with `WNOHANG` after every command to
 # prevent piles of zombie processes from building up.
-echo "# [doubledown-fsevents] syncing $LOCAL changes to $SERVER:$REMOTE" >&2
+if [ "$has_growl" == "0" ] ; then
+    growlnotify "# [doubledown-fsevents] syncing $LOCAL changes to $SERVER:$REMOTE" >&2
+else
+	echo "# [doubledown-fsevents] syncing $LOCAL changes to $SERVER:$REMOTE" >&2
+fi
+
 inotifywait -mrq \
 	-e modify,attrib,move,move_self,create,delete \
 	--format "%e %w%f" "$LOCAL" | while read LINE
@@ -61,11 +69,19 @@ do
 		case "$EVENT" in
 			delete|moved_from)
 				ssh "$USER@$SERVER" rm -d "$PATHNAME2" 2>/dev/null
-				echo "# [doubledown-inotify] removed $PATHNAME2" >&2;;
+				if [ "$has_growl" == "0" ] ; then
+				    growlnotify "# [doubledown-inotify] removed $PATHNAME2" >&2;;
+				else
+					echo "# [doubledown-inotify] removed $PATHNAME2" >&2;;
+				fi
 			*)
 				#echo "# [doubledown-inotify] uploading $PATHNAME2" >&2
 				rsync $EXCLUDES $PRETEND -aiz "$PATHNAME" "$USER@$SERVER:$REMOTE/$PATHNAME2" 2>/dev/null
-				echo "# [doubledown-inotify] uploaded $PATHNAME2" >&2;;
+				if [ "$has_growl" == "0" ] ; then
+				    growlnotify echo "# [doubledown-inotify] uploaded $PATHNAME2" >&2;;
+				else
+					echo "# [doubledown-inotify] uploaded $PATHNAME2" >&2;;
+				fi
 		esac
 	) &
 done
