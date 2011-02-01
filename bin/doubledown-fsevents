@@ -2,6 +2,8 @@
 
 require 'optparse'
 require 'osx/foundation'
+require 'rubygems'
+require 'growl'
 
 OSX.require_framework "/System/Library/Frameworks/CoreServices.framework#{
   }/Frameworks/CarbonCore.framework"
@@ -27,6 +29,12 @@ class Doubledown
     $stderr.puts "# [doubledown-fsevents] syncing #{@local
       } changes to #{@server}:#{@remote}"
     recache
+    
+    notification = Growl.new
+    notification.title = 'Syncing'
+    notification.message = "syncing #{@local
+      } changes to #{@server}:#{@remote}"
+    notification.run if Growl.installed?
 
     fsevents_cb = proc do |stream, context, count, paths, flags, events|
       paths.regard_as("*")
@@ -97,6 +105,10 @@ private
     fork do
       if system(*argv)
         $stderr.puts "# [doubledown-fsevents] #{message}"
+        notification = Growl.new
+        notification.title = 'Process Complete'
+        notification.message = "#{message}"
+        notification.run if Growl.installed?
       end
     end
   end
