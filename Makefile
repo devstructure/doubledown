@@ -1,6 +1,7 @@
 prefix=/usr/local
 
 VERSION=0.0.2
+BUILD=1
 
 PACKAGEMAKER=/Developer/Applications/Utilities/PackageMaker.app/Contents/MacOS/PackageMaker
 
@@ -53,12 +54,16 @@ package-Linux: deb
 
 deb:
 	[ "$$(whoami)" = "root" ] || false
-	m4 -D__VERSION__=$(VERSION) control.m4 >control
+	m4 -D__VERSION__=$(VERSION)-$(BUILD) control.m4 >control
 	debra create debian control
 	make install DESTDIR=debian prefix=/usr
 	chown -R root:root debian
-	debra build debian doubledown_$(VERSION)_all.deb
+	debra build debian doubledown_$(VERSION)-$(BUILD)_all.deb
 	debra destroy debian
+
+deploy:
+	scp -i ~/production.pem doubledown_$(VERSION)-$(BUILD)_all.deb ubuntu@packages.devstructure.com:
+	ssh -i ~/production.pem -t ubuntu@packages.devstructure.com "sudo freight add doubledown_$(VERSION)-$(BUILD)_all.deb apt/lenny apt/squeeze apt/lucid apt/maverick apt/natty && rm doubledown_$(VERSION)-$(BUILD)_all.deb && sudo freight cache apt/lenny apt/squeeze apt/lucid apt/maverick apt/natty"
 
 man:
 	find man -name \*.ronn | xargs -n1 ronn \
