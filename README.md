@@ -33,7 +33,7 @@ Richard Crowley <richard@devstructure.com>
 
 ## SEE ALSO
 
-`doubledown` was written to make it easier for DevStructure users to use Textmate and other IDEs but it's far from the only way to skin the cat.  See <http://docs.devstructure.com/working_remotely> for more options.
+`doubledown` was written to make it easier for DevStructure users to use Textmate and other IDEs but it's far from the only way to skin the cat.
 
 doubledown-fsevents(1) watches a directory and relays changes.  It is called by `doubledown`.
 
