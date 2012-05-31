@@ -2,13 +2,17 @@
 
 require 'optparse'
 require 'osx/foundation'
+require 'rubygems'
+require 'growl'
 
 OSX.require_framework "/System/Library/Frameworks/CoreServices.framework#{
   }/Frameworks/CarbonCore.framework"
+include OSX
 
 class Doubledown
 
-  def initialize(local, remote)
+  def initialize(local, remote, options)
+    @options = options
 
     # Decide on the local path.
     Dir.mkdir(local) unless File.directory?(local)
@@ -24,46 +28,58 @@ class Doubledown
   def run
     $stderr.puts "# [doubledown-fsevents] syncing #{@local
       } changes to #{@server}:#{@remote}"
+    recache
+    
+    notification = Growl.new
+    notification.title = 'Syncing'
+    notification.message = "syncing #{@local
+      } changes to #{@server}:#{@remote}"
+    notification.run if Growl.installed?
 
+    fsevents_cb = proc do |stream, context, count, paths, flags, events|
+      paths.regard_as("*")
+      count.times do |i|
+        dirname = paths[i].gsub(%r</$>, "")
+        deleted_files dirname
+        modified_files dirname
+      end
+      recache
+    
+      # Keep the process tree clean.
+      begin
+        while pid = Process.wait(-1); end
+      rescue; end
+    end
+    
     # Begin incremental syncing from local to remote.
-    stream = OSX.FSEventStreamCreate(
-      OSX::KCFAllocatorDefault,
-      lambda { |stream, context, count, paths, flags, events|
-
-        paths.regard_as("*")
-        count.times do |i|
-          dirname = paths[i].gsub(%r</$>, "")
-          deleted_files dirname
-          modified_files dirname
-        end
-        recache
-
-        # Keep the process tree clean.
-        begin
-          while pid = Process.wait(-1); end
-        rescue; end
-
-      },
+    stream = FSEventStreamCreate(
+      KCFAllocatorDefault,
+      fsevents_cb,
       nil,
       [@local],
-      OSX::KFSEventStreamEventIdSinceNow,
+      KFSEventStreamEventIdSinceNow,
       0.1,
       0
-    ) or raise
-    OSX.FSEventStreamScheduleWithRunLoop(
+    ) 
+
+    die "Failed to create the FSEventStream" unless stream
+
+    FSEventStreamScheduleWithRunLoop(
       stream,
-      OSX.CFRunLoopGetCurrent,
-      OSX::KCFRunLoopDefaultMode
-    )
-    OSX.FSEventStreamStart(stream) or raise
-    recache
+      CFRunLoopGetCurrent(),
+      KCFRunLoopDefaultMode)
+
+    ok = FSEventStreamStart(stream)
+    die "Failed to start the FSEventStream" unless ok
 
     # This call never returns except by an exception.
     begin
-      OSX.CFRunLoopRun
+      CFRunLoopRun()
     rescue Interrupt
+      FSEventStreamStop(stream)
+      FSEventStreamInvalidate(stream)
+      FSEventStreamRelease(stream)
     end
-
   end
 
 private
@@ -89,19 +105,21 @@ private
     fork do
       if system(*argv)
         $stderr.puts "# [doubledown-fsevents] #{message}"
+        notification = Growl.new
+        notification.title = 'Process Complete'
+        notification.message = "#{message}"
+        notification.run if Growl.installed?
       end
     end
   end
 
   def modified_file(pathname)
     pathname2 = "#{@remote}#{pathname.sub(@local, "")}"
-    $stderr.puts "# [doubledown-fsevents] uploading #{pathname2}"
-    fork_exec([
-      "rsync",
-      "-az",
+    #$stderr.puts "# [doubledown-fsevents] uploading #{pathname2}"
+    fork_exec(["rsync", "-aiz"] + @options + [
       pathname,
-      "#{@user}@#{@server}:#{pathname2}",
-    ], "uploaded #{pathname2}")
+      "#{@user}@#{@server}:#{pathname2}"
+    ], "uploaded #{pathname2} (excluded files were not uploaded)")
   rescue => e
     $stderr.puts e.inspect
     $stderr.puts e.backtrace
@@ -147,15 +165,26 @@ private
       "/bin/sh -c '#{command}'",
     ], message)
   end
-
 end
 
-options = {}
+options = [] 
+
 OptionParser.new do |parser|
   parser.banner = "Usage: <local> [<user>@]<server>:<remote>"
-  parser.on("-h", "--help", "show this help message") { options[:help] = true }
+  parser.on_tail("-h", "--help", "show this help message") do
+    puts parser
+    exit
+  end
+  parser.on("-p", "--pretend", "list files, don't copy") { 
+    options << "--list-only" }
 end.parse!
+
+# find excludes file
+options << "--exclude=.excludes*"
+if File::exists?("#{ARGV[0]}/.excludes")
+  options << "--exclude-from=#{ARGV[0]}/.excludes"
+end
 
 trap("EXIT") { Process.waitall }
 
-Doubledown.new(ARGV[0], ARGV[1]).run
+Doubledown.new(ARGV[0], ARGV[1], options).run
