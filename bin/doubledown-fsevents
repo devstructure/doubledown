@@ -1,4 +1,4 @@
-#!/usr/bin/ruby
+#!/System/Library/Frameworks/Ruby.framework/Versions/1.8/usr/bin/ruby
 
 require 'optparse'
 require 'osx/foundation'
@@ -25,25 +25,27 @@ class Doubledown
     $stderr.puts "# [doubledown-fsevents] syncing #{@local
       } changes to #{@server}:#{@remote}"
 
+    callback = Proc.new { |stream, context, count, paths, flags, events|
+
+      paths.regard_as("*")
+      count.times do |i|
+        dirname = paths[i].gsub(%r</$>, "")
+        deleted_files dirname
+        modified_files dirname
+      end
+      recache
+
+      # Keep the process tree clean.
+      begin
+        while pid = Process.wait(-1); end
+      rescue; end
+
+    }
+
     # Begin incremental syncing from local to remote.
     stream = OSX.FSEventStreamCreate(
       OSX::KCFAllocatorDefault,
-      lambda { |stream, context, count, paths, flags, events|
-
-        paths.regard_as("*")
-        count.times do |i|
-          dirname = paths[i].gsub(%r</$>, "")
-          deleted_files dirname
-          modified_files dirname
-        end
-        recache
-
-        # Keep the process tree clean.
-        begin
-          while pid = Process.wait(-1); end
-        rescue; end
-
-      },
+      callback,
       nil,
       [@local],
       OSX::KFSEventStreamEventIdSinceNow,
